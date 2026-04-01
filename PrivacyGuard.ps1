@@ -16,11 +16,13 @@ function Write-Log {
     param([string]$Message)
     $line = "{0} | {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Message
     Add-Content -Path $script:LogFile -Value $line -Encoding UTF8
-    if ($script:LogBox) {
-        $script:LogBox.Invoke([Action]{
-            $script:LogBox.AppendText("$line`r`n")
-            $script:LogBox.ScrollToCaret()
-        })
+    if ($script:LogBox -and $script:LogBox.IsHandleCreated) {
+        try {
+            $script:LogBox.Invoke([Action]{
+                $script:LogBox.AppendText("$line`r`n")
+                $script:LogBox.ScrollToCaret()
+            })
+        } catch {}
     }
 }
 
