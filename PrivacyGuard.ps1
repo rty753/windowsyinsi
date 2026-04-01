@@ -116,19 +116,28 @@ function Get-AllStatus {
     # ── 5. WiFi ──
     $wifi = [PSCustomObject]@{ Name="WiFi"; Key="wifi"; Icon="NET"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="无线网卡,禁用后断网(仅限WiFi,网线不受影响)" }
     try {
-        $iface = netsh interface show interface 2>$null | Where-Object { $_ -match 'Wi-Fi|WiFi|Wireless|WLAN' }
-        if ($iface) {
-            if ($iface -match 'Connected|已连接') {
+        $adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
+            $_.PhysicalMediaType -match '802\.11|Wireless|Native 802' -or
+            $_.InterfaceDescription -match 'Wi-?Fi|Wireless|WLAN|802\.11'
+        }
+        if ($adapters) {
+            $up = @($adapters | Where-Object { $_.Status -eq 'Up' })
+            $notUp = @($adapters | Where-Object { $_.Status -ne 'Up' })
+            if ($up.Count -gt 0) {
                 $wifi.Enabled = $true; $wifi.Status = "active"
                 $ssidLine = netsh wlan show interfaces 2>$null | Where-Object { $_ -match '^\s+SSID\s+:' -and $_ -notmatch 'BSSID' }
-                $ssid = if ($ssidLine) { ($ssidLine -split ':\s*',2)[1].Trim() } else { "未知" }
-                $wifi.Desc = "WiFi 已连接: $ssid"
-                $wifi.Details = @("SSID: $ssid")
-            } elseif ($iface -match 'Disconnected|已断开') {
-                $wifi.Enabled = $true; $wifi.Status = "warning"
-                $wifi.Desc = "WiFi 已开启, 未连接"
-            } else {
+                $ssid = if ($ssidLine) { ($ssidLine -split ':\s*',2)[1].Trim() } else { $null }
+                if ($ssid) {
+                    $wifi.Desc = "WiFi 已连接: $ssid"
+                    $wifi.Details = @("SSID: $ssid", "适配器: $($up[0].Name)")
+                } else {
+                    $wifi.Status = "warning"
+                    $wifi.Desc = "WiFi 已开启, 未连接"
+                    $wifi.Details = @("适配器: $($up[0].Name)")
+                }
+            } elseif ($notUp.Count -gt 0) {
                 $wifi.Desc = "WiFi 已禁用"
+                $wifi.Details = @($notUp | ForEach-Object { "[已禁用] $($_.Name) ($($_.InterfaceDescription))" })
             }
         } else { $wifi.Desc = "未检测到 WiFi 适配器" }
     } catch { $wifi.Desc = "检测出错" }
@@ -323,11 +332,24 @@ function Set-DeviceState {
                 $msg = "蓝牙已$action"
             }
             "wifi" {
-                $names = @("Wi-Fi","WiFi","Wireless","WLAN")
+                $adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
+                    $_.PhysicalMediaType -match '802\.11|Wireless|Native 802' -or
+                    $_.InterfaceDescription -match 'Wi-?Fi|Wireless|WLAN|802\.11'
+                }
                 $done = $false
-                foreach ($n in $names) {
-                    $r = if($Enable){ netsh interface set interface $n enable 2>&1 } else { netsh interface set interface $n disable 2>&1 }
-                    if ($LASTEXITCODE -eq 0) { $done = $true; break }
+                foreach ($a in $adapters) {
+                    try {
+                        if ($Enable) { Enable-NetAdapter -Name $a.Name -Confirm:$false -ErrorAction Stop }
+                        else { Disable-NetAdapter -Name $a.Name -Confirm:$false -ErrorAction Stop }
+                        $done = $true
+                    } catch {}
+                }
+                if (-not $done -and -not $Enable) {
+                    # fallback: try netsh with common names
+                    foreach ($n in @("Wi-Fi","WiFi","Wireless","WLAN")) {
+                        netsh interface set interface $n disable 2>$null
+                        if ($LASTEXITCODE -eq 0) { $done = $true; break }
+                    }
                 }
                 $msg = if($done){ "WiFi 已$action" } else { "WiFi ${action}失败" }
             }
