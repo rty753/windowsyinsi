@@ -1,4 +1,4 @@
-#Requires -RunAsAdministrator
+﻿#Requires -RunAsAdministrator
 # Windows 隐私卫士 - Privacy Guard
 # 双击运行即可，无需安装任何依赖
 
