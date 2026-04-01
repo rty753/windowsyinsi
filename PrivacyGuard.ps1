@@ -33,7 +33,7 @@ function Get-AllStatus {
     $items = [System.Collections.ArrayList]::new()
 
     # ── 1. 摄像头 ──
-    $cam = [PSCustomObject]@{ Name="摄像头"; Key="camera"; Icon="CAM"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $cam = [PSCustomObject]@{ Name="摄像头"; Key="camera"; Icon="CAM"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="可被应用调用拍照录像,禁用后任何程序都无法使用摄像头" }
     try {
         $devs = Get-PnpDevice -Class Camera -ErrorAction SilentlyContinue
         if (-not $devs) { $devs = Get-PnpDevice -Class Image -ErrorAction SilentlyContinue }
@@ -58,7 +58,7 @@ function Get-AllStatus {
     [void]$items.Add($cam)
 
     # ── 2. 麦克风 ──
-    $mic = [PSCustomObject]@{ Name="麦克风"; Key="microphone"; Icon="MIC"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $mic = [PSCustomObject]@{ Name="麦克风"; Key="microphone"; Icon="MIC"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="声卡自带的音频输入(线路输入/立体声混音等),台式机没插麦也会显示" }
     try {
         $devs = Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue |
             Where-Object { $_.FriendlyName -match 'Mic|麦克风' }
@@ -85,7 +85,7 @@ function Get-AllStatus {
     [void]$items.Add($mic)
 
     # ── 3. 定位服务 ──
-    $loc = [PSCustomObject]@{ Name="定位服务"; Key="location"; Icon="LOC"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $loc = [PSCustomObject]@{ Name="定位服务"; Key="location"; Icon="LOC"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="通过IP地址定位你的大致位置,天气/地图/浏览器等会用到" }
     try {
         $svc = Get-Service lfsvc -ErrorAction SilentlyContinue
         $regVal = "Deny"
@@ -101,7 +101,7 @@ function Get-AllStatus {
     [void]$items.Add($loc)
 
     # ── 4. 蓝牙 ──
-    $bt = [PSCustomObject]@{ Name="蓝牙"; Key="bluetooth"; Icon="BT"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $bt = [PSCustomObject]@{ Name="蓝牙"; Key="bluetooth"; Icon="BT"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="无线连接耳机/键鼠等,开着会被附近设备扫描到" }
     try {
         $devs = Get-PnpDevice -Class Bluetooth -ErrorAction SilentlyContinue
         if ($devs) {
@@ -116,7 +116,7 @@ function Get-AllStatus {
     [void]$items.Add($bt)
 
     # ── 5. WiFi ──
-    $wifi = [PSCustomObject]@{ Name="WiFi"; Key="wifi"; Icon="NET"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $wifi = [PSCustomObject]@{ Name="WiFi"; Key="wifi"; Icon="NET"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="无线网卡,禁用后断网(仅限WiFi,网线不受影响)" }
     try {
         $iface = netsh interface show interface 2>$null | Where-Object { $_ -match 'Wi-Fi|WiFi|Wireless|WLAN' }
         if ($iface) {
@@ -137,7 +137,7 @@ function Get-AllStatus {
     [void]$items.Add($wifi)
 
     # ── 6. USB 摄像头 ──
-    $usb = [PSCustomObject]@{ Name="USB摄像头"; Key="usb_camera"; Icon="USB"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $usb = [PSCustomObject]@{ Name="USB摄像头"; Key="usb_camera"; Icon="USB"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="外接USB摄像头设备,禁用后拔插也不会被识别" }
     try {
         $devs = Get-PnpDevice -Class Camera -ErrorAction SilentlyContinue | Where-Object { $_.InstanceId -like 'USB*' }
         if (-not $devs) { $devs = Get-PnpDevice -Class Image -ErrorAction SilentlyContinue | Where-Object { $_.InstanceId -like 'USB*' } }
@@ -152,7 +152,7 @@ function Get-AllStatus {
     [void]$items.Add($usb)
 
     # ── 7. 传感器服务 ──
-    $sensor = [PSCustomObject]@{ Name="传感器服务"; Key="sensor"; Icon="SNS"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $sensor = [PSCustomObject]@{ Name="传感器服务"; Key="sensor"; Icon="SNS"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="管理光线/方向/重力等传感器,台式机一般用不到" }
     try {
         $running = $false
         foreach ($sn in @("SensorService","SensorDataService","SensrSvc")) {
@@ -166,7 +166,7 @@ function Get-AllStatus {
     [void]$items.Add($sensor)
 
     # ── 8. 远程桌面 ──
-    $rdp = [PSCustomObject]@{ Name="远程桌面(RDP)"; Key="rdp"; Icon="RDP"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $rdp = [PSCustomObject]@{ Name="远程桌面(RDP)"; Key="rdp"; Icon="RDP"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="允许别人远程控制你的电脑,不用务必关闭!" }
     try {
         $deny = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name fDenyTSConnections -ErrorAction SilentlyContinue).fDenyTSConnections
         if ($deny -eq 0) {
@@ -177,7 +177,7 @@ function Get-AllStatus {
     [void]$items.Add($rdp)
 
     # ── 9. 诊断数据 ──
-    $tel = [PSCustomObject]@{ Name="诊断数据"; Key="telemetry"; Icon="TEL"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $tel = [PSCustomObject]@{ Name="诊断数据"; Key="telemetry"; Icon="TEL"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="Windows向微软发送的使用数据,级别越高发送越多" }
     try {
         $level = $null
         try { $level = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name AllowTelemetry -ErrorAction SilentlyContinue).AllowTelemetry } catch {}
@@ -194,7 +194,7 @@ function Get-AllStatus {
     [void]$items.Add($tel)
 
     # ── 10. Cortana ──
-    $cor = [PSCustomObject]@{ Name="Cortana"; Key="cortana"; Icon="COR"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $cor = [PSCustomObject]@{ Name="Cortana"; Key="cortana"; Icon="COR"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="微软语音助手(类似Siri),会收集搜索和输入数据,用不到建议禁用" }
     try {
         $allow = $null
         try { $allow = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name AllowCortana -ErrorAction SilentlyContinue).AllowCortana } catch {}
@@ -208,7 +208,7 @@ function Get-AllStatus {
     [void]$items.Add($cor)
 
     # ── 11. 广告 ID ──
-    $ad = [PSCustomObject]@{ Name="广告 ID"; Key="ad_id"; Icon="AD"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $ad = [PSCustomObject]@{ Name="广告 ID"; Key="ad_id"; Icon="AD"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="微软给你分配的广告追踪标识,用于精准推送广告" }
     try {
         $en = 1
         try { $en = (Get-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" -Name Enabled -ErrorAction SilentlyContinue).Enabled } catch {}
@@ -219,7 +219,7 @@ function Get-AllStatus {
     [void]$items.Add($ad)
 
     # ── 12. 后台应用 ──
-    $bg = [PSCustomObject]@{ Name="后台应用"; Key="bg_apps"; Icon="BG"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $bg = [PSCustomObject]@{ Name="后台应用"; Key="bg_apps"; Icon="BG"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="允许商店应用在后台偷偷运行和联网,禁用后只有打开才会运行" }
     try {
         $dis = 0
         try { $dis = (Get-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Name GlobalUserDisabled -ErrorAction SilentlyContinue).GlobalUserDisabled } catch {}
@@ -230,7 +230,7 @@ function Get-AllStatus {
     [void]$items.Add($bg)
 
     # ── 13. 剪贴板 ──
-    $clip = [PSCustomObject]@{ Name="剪贴板历史"; Key="clipboard"; Icon="CLB"; Status="safe"; Desc=""; Enabled=$false; Details=@() }
+    $clip = [PSCustomObject]@{ Name="剪贴板历史"; Key="clipboard"; Icon="CLB"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="你复制的内容会被保存并同步到微软云端,含密码等敏感信息" }
     try {
         $hist = 0; $cloud = 0
         try { $hist = (Get-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Clipboard" -Name EnableClipboardHistory -ErrorAction SilentlyContinue).EnableClipboardHistory } catch {}
@@ -408,7 +408,7 @@ function Set-DeviceState {
 # ══════════════════════════════════════════════════════════════════════
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Windows 隐私卫士"
-$form.Size = New-Object System.Drawing.Size(820, 900)
+$form.Size = New-Object System.Drawing.Size(820, 950)
 $form.StartPosition = "CenterScreen"
 $form.BackColor = [System.Drawing.ColorTranslator]::FromHtml("#1a2332")
 $form.ForeColor = [System.Drawing.Color]::White
@@ -518,7 +518,7 @@ function Build-DeviceRow {
     param($item, [int]$yPos)
 
     $panel = New-Object System.Windows.Forms.Panel
-    $panel.Size = New-Object System.Drawing.Size(750, 55)
+    $panel.Size = New-Object System.Drawing.Size(750, 70)
     $panel.Location = New-Object System.Drawing.Point(10, $yPos)
     $panel.BackColor = [System.Drawing.ColorTranslator]::FromHtml("#243447")
     $panel.Tag = $item.Key
@@ -526,7 +526,7 @@ function Build-DeviceRow {
     # 状态灯
     $light = New-Object System.Windows.Forms.Panel
     $light.Size = New-Object System.Drawing.Size(16, 16)
-    $light.Location = New-Object System.Drawing.Point(12, 20)
+    $light.Location = New-Object System.Drawing.Point(12, 18)
     $colorMap = @{ "safe"="#00c853"; "active"="#ff1744"; "warning"="#ffc107" }
     $light.BackColor = [System.Drawing.ColorTranslator]::FromHtml($colorMap[$item.Status])
     $panel.Controls.Add($light)
@@ -536,7 +536,7 @@ function Build-DeviceRow {
     $iconLbl.Text = "[$($item.Icon)]"
     $iconLbl.Font = New-Object System.Drawing.Font("Consolas", 9, [System.Drawing.FontStyle]::Bold)
     $iconLbl.ForeColor = [System.Drawing.ColorTranslator]::FromHtml("#8899aa")
-    $iconLbl.Location = New-Object System.Drawing.Point(38, 8)
+    $iconLbl.Location = New-Object System.Drawing.Point(38, 6)
     $iconLbl.AutoSize = $true
     $panel.Controls.Add($iconLbl)
 
@@ -545,7 +545,7 @@ function Build-DeviceRow {
     $nameLbl.Text = $item.Name
     $nameLbl.Font = New-Object System.Drawing.Font("Microsoft YaHei UI", 10, [System.Drawing.FontStyle]::Bold)
     $nameLbl.ForeColor = [System.Drawing.Color]::White
-    $nameLbl.Location = New-Object System.Drawing.Point(95, 6)
+    $nameLbl.Location = New-Object System.Drawing.Point(95, 4)
     $nameLbl.AutoSize = $true
     $panel.Controls.Add($nameLbl)
 
@@ -554,15 +554,24 @@ function Build-DeviceRow {
     $descLbl.Text = $item.Desc
     $descLbl.Font = New-Object System.Drawing.Font("Microsoft YaHei UI", 8.5)
     $descLbl.ForeColor = [System.Drawing.ColorTranslator]::FromHtml("#8899aa")
-    $descLbl.Location = New-Object System.Drawing.Point(95, 30)
-    $descLbl.Size = New-Object System.Drawing.Size(420, 20)
+    $descLbl.Location = New-Object System.Drawing.Point(95, 26)
+    $descLbl.Size = New-Object System.Drawing.Size(480, 18)
     $panel.Controls.Add($descLbl)
+
+    # 提示说明
+    $tipLbl = New-Object System.Windows.Forms.Label
+    $tipLbl.Text = $item.Tip
+    $tipLbl.Font = New-Object System.Drawing.Font("Microsoft YaHei UI", 8)
+    $tipLbl.ForeColor = [System.Drawing.ColorTranslator]::FromHtml("#5a7a8a")
+    $tipLbl.Location = New-Object System.Drawing.Point(95, 46)
+    $tipLbl.Size = New-Object System.Drawing.Size(480, 18)
+    $panel.Controls.Add($tipLbl)
 
     # 详情按钮
     $detailBtn = New-Object System.Windows.Forms.Button
     $detailBtn.Text = "详情"
     $detailBtn.Size = New-Object System.Drawing.Size(55, 30)
-    $detailBtn.Location = New-Object System.Drawing.Point(590, 12)
+    $detailBtn.Location = New-Object System.Drawing.Point(590, 20)
     $detailBtn.BackColor = [System.Drawing.ColorTranslator]::FromHtml("#2d4159")
     $detailBtn.ForeColor = [System.Drawing.ColorTranslator]::FromHtml("#8899aa")
     $detailBtn.FlatStyle = "Flat"
@@ -585,7 +594,7 @@ function Build-DeviceRow {
     $toggleColor = if($item.Enabled){"#d32f2f"}else{"#1e88e5"}
     $toggleBtn.Text = $toggleText
     $toggleBtn.Size = New-Object System.Drawing.Size(65, 30)
-    $toggleBtn.Location = New-Object System.Drawing.Point(655, 12)
+    $toggleBtn.Location = New-Object System.Drawing.Point(655, 20)
     $toggleBtn.BackColor = [System.Drawing.ColorTranslator]::FromHtml($toggleColor)
     $toggleBtn.ForeColor = [System.Drawing.Color]::White
     $toggleBtn.FlatStyle = "Flat"
@@ -629,7 +638,7 @@ function Refresh-Dashboard {
         $panel = Build-DeviceRow $item $y
         $dashScroll.Controls.Add($panel)
         $script:RowPanels += $panel
-        $y += 60
+        $y += 75
     }
 
     $activeCount = @($data | Where-Object { $_.Enabled -and ($_.Status -eq 'active' -or $_.Status -eq 'warning') }).Count
