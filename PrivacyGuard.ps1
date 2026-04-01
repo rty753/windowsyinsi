@@ -60,11 +60,9 @@ function Get-AllStatus {
     # ── 2. 麦克风 ──
     $mic = [PSCustomObject]@{ Name="麦克风"; Key="microphone"; Icon="MIC"; Status="safe"; Desc=""; Enabled=$false; Details=@(); Tip="声卡自带的音频输入(线路输入/立体声混音等),台式机没插麦也会显示" }
     try {
+        $micFilter = 'Mic|麦克风|线路输入|Line.?In|立体声混音|Stereo.?Mix|录音|Record|Input|Capture'
         $devs = Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue |
-            Where-Object { $_.FriendlyName -match 'Mic|麦克风' }
-        if (-not $devs) {
-            $devs = Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue
-        }
+            Where-Object { $_.FriendlyName -match $micFilter }
         if ($devs) {
             $ok = @($devs | Where-Object { $_.Status -eq 'OK' })
             if ($ok.Count -gt 0) {
@@ -298,7 +296,8 @@ function Set-DeviceState {
                 $msg = "摄像头已$action"
             }
             "microphone" {
-                $devs = Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue | Where-Object { $_.FriendlyName -match 'Mic|麦克风' }
+                $micFilter = 'Mic|麦克风|线路输入|Line.?In|立体声混音|Stereo.?Mix|录音|Record|Input|Capture'
+                $devs = Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue | Where-Object { $_.FriendlyName -match $micFilter }
                 foreach ($d in $devs) {
                     if ($Enable) { Enable-PnpDevice -InstanceId $d.InstanceId -Confirm:$false -ErrorAction SilentlyContinue }
                     else { Disable-PnpDevice -InstanceId $d.InstanceId -Confirm:$false -ErrorAction SilentlyContinue }
